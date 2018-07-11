@@ -1,6 +1,6 @@
 %token <(int * int * int)> DATE
 %token <(int * int * float)> TIME
-%token <Types.Coordinates.coordinate> COORD
+%token <Coordinates.coordinate> COORD
 
 %token <int> NAT
 %token <float> REAL
@@ -16,7 +16,7 @@
 %token EOL EOF
 
 %start sony_gps_file
-%type <((Ptime.t * (Ptime.t * Ptime.t)) * Types.GP.sentence list) list> sony_gps_file
+%type <GP.segment list> sony_gps_file
 
 
 %%
@@ -53,15 +53,15 @@ sentences:
   | ss = list(sentence)         { ss }
 
 sentence:
-  | SENTENCE_PREFIX talker_sentence EOL         { Types.GP.Talker $2 }
+  | SENTENCE_PREFIX talker_sentence EOL         { GP.Talker $2 }
 /*
   | SENTENCE_PREFIX proprietary_sentence EOL    { $3 }
   | SENTENCE_PREFIX query_sentence EOL          { $3 }
  */
 
 talker_sentence:
-  | GP GGA COMMA gp_gga_sentence        { Types.GP.GGA $4 }
-  | GP RMC COMMA gp_rmc_sentence        { Types.GP.RMC $4 }
+  | GP GGA COMMA gp_gga_sentence        { GP.Talker.GGA $4 }
+  | GP RMC COMMA gp_rmc_sentence        { GP.Talker.RMC $4 }
 
 gp_gga_sentence:
   | time COMMA coords COMMA NAT COMMA NAT COMMA COMMA COMMA UNIT COMMA COMMA UNIT COMMA COMMA STAR checksum
@@ -69,13 +69,13 @@ gp_gga_sentence:
 
 gp_rmc_sentence:
   | TIME COMMA STATUS COMMA coords COMMA REAL COMMA COMMA DATE COMMA COMMA COMMA STATUS STAR checksum
-        { Types.utc_of_dt ($10,$1),$5,$7,None,None,$16 }
+        { Utils.utc_of_dt ($10,$1),$5,$7,None,None,$16 }
 
 date_time:
-  | DATE TIME                   { Types.utc_of_dt ($1,$2) }
+  | DATE TIME                   { Utils.utc_of_dt ($1,$2) }
 
 time:
-  | TIME                        { Types.utc_of_t $1 }
+  | TIME                        { Utils.utc_of_t $1 }
 
 checksum:
   | HEX                         { $1 }

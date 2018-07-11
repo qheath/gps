@@ -1,8 +1,0 @@
-# Specifications for the "nmea" library
-#name = "nmea"
-version = "0.1"
-description = "NMEA GPS data"
-#requires = ""
-#directory = "+nmea"
-archive(byte) = "nmea.cma"
-archive(native) = "nmea.cmxa"

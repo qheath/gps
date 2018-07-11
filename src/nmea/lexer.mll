@@ -38,7 +38,7 @@ rule token = parse
   | coord                       { let coord = float_of_string (Lexing.lexeme lexbuf) in
                                   let degrees = (int_of_float coord)/100 in
                                   let minutes = coord -. ((float)(100 * degrees)) in
-                                  COORD (Types.Coordinates.DDM (degrees,minutes)) }
+                                  COORD (Coordinates.DDM (degrees,minutes)) }
   | nat                         { NAT (int_of_string (Lexing.lexeme lexbuf)) }
   | real                        { REAL (float_of_string (Lexing.lexeme lexbuf)) }
   | hex                         { HEX (int_of_string ("0x"^(Lexing.lexeme lexbuf))) }
