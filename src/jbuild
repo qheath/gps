@@ -1,0 +1,9 @@
+(jbuild_version 1)
+
+(executable
+ ((name test)
+  (public_name test)
+  (package nmea)
+  (libraries (patience_diff getarg nmea))
+  (modules (Input Test))
+  (flags (:standard -warn-error A))))
