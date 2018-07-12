@@ -44,42 +44,44 @@ let () =
   let ifile,ofile,_delay = parse_args () in
   match
     let ic = open_in ifile in
-    let parser,lexer,parse =
-      NMEA.(Parser.Incremental.sony_gps_file,Lexer.token,Input.parse)
-    and lexbuf = Lexing.from_channel ic in
     let segments =
-      match parse ~parser ~lexer lexbuf with
-        | Yes segments -> Some segments
-        | Parser (state,position) ->
-            (*
-            let message =
-              try Some (Parser_messages.message (Interp.number state))
-              with Not_found -> None
-            in
-             *)
+      let lexbuf = Lexing.from_channel ic in
+      match NMEA.Input.parse_sony_gps_file lexbuf with
+      | Yes segments -> Some segments
+      | Parser (state,position) ->
+        begin
+          match
+            (*try Some (Parser_messages.message (Interp.number state))
+            with Not_found ->*) None
+          with
+          | None ->
             Format.eprintf "%a: parser state %d reached, cannot go forward@."
-              Input.Pos.pp position state ;
-            None
-        | Lexer (message) ->
-            Format.eprintf "%a: lexing error: %S@."
-              Input.Pos.pp (Input.Pos.of_lexbuf lexbuf ()) message ;
-            None
+              JupiterI.Pos.pp (JupiterI.Pos.of_positions position) state
+          | Some message ->
+            Format.eprintf "%a: %s@."
+              JupiterI.Pos.pp (JupiterI.Pos.of_positions position) message
+        end ;
+        None
+      | Lexer (message) ->
+        Format.eprintf "%a: lexing error: %S@."
+          JupiterI.Pos.pp (JupiterI.Pos.of_lexbuf lexbuf ()) message ;
+        None
     in
     close_in ic ;
     segments
   with
-    | None -> ()
-    | Some segments ->
-        let oc = open_out ofile in
-        let fmt = Format.formatter_of_out_channel oc in
-        let aux ((time0,(time1,time2)),sentences) =
-          NMEA.GP.fprintlf fmt "/%a%a/"
-            NMEA.Utils.pp_date time0 NMEA.Utils.pp_time time0 ;
-          NMEA.GP.fprintlf fmt "/%a%a/%a%a/"
-            NMEA.Utils.pp_date time1 NMEA.Utils.pp_time time1
-            NMEA.Utils.pp_date time2 NMEA.Utils.pp_time time2 ;
-          List.iter (NMEA.GP.pp fmt) sentences
-        in
-        List.iter aux segments ;
-        close_out oc ;
-        ()
+  | None -> ()
+  | Some segments ->
+    let oc = open_out ofile in
+    let fmt = Format.formatter_of_out_channel oc in
+    let aux ((time0,(time1,time2)),sentences) =
+      NMEA.GP.fprintlf fmt "/%a%a/"
+        NMEA.Utils.pp_date time0 NMEA.Utils.pp_time time0 ;
+      NMEA.GP.fprintlf fmt "/%a%a/%a%a/"
+        NMEA.Utils.pp_date time1 NMEA.Utils.pp_time time1
+        NMEA.Utils.pp_date time2 NMEA.Utils.pp_time time2 ;
+      List.iter (NMEA.GP.pp fmt) sentences
+    in
+    List.iter aux segments ;
+    close_out oc ;
+    ()

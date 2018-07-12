@@ -2,8 +2,6 @@
 
 (executable
  ((name test)
-  (public_name test)
-  (package nmea)
-  (libraries (patience_diff getarg nmea))
-  (modules (Input Test))
+  (libraries (patience_diff getarg jupiteri nmea))
+  (modules (Test))
   (flags (:standard -warn-error A))))

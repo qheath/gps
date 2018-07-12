@@ -5,9 +5,9 @@ type answer =
   | Parser of int * (Lexing.position * Lexing.position)
   | Lexer of string
 
-let parse ~parser ~lexer lexbuf =
+let parse_sony_gps_file lexbuf =
   let open MenhirLib.General in
-  let input = Interp.lexer_lexbuf_to_supplier lexer lexbuf
+  let input = Interp.lexer_lexbuf_to_supplier Lexer.token lexbuf
   and success x = Yes x
   and failure = function
     | Interp.HandlingError env ->
@@ -20,5 +20,5 @@ let parse ~parser ~lexer lexbuf =
   in
   try
     Interp.loop_handle success failure input
-      (parser lexbuf.Lexing.lex_curr_p)
+      (Parser.Incremental.sony_gps_file lexbuf.Lexing.lex_curr_p)
   with e -> Lexer (Printexc.to_string e)

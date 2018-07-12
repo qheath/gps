@@ -67,4 +67,4 @@ rule token = parse
 
   | eof                         { EOF }
 
-  | _                           { failwith (Format.sprintf "invalid string: %S" (Lexing.lexeme lexbuf)) }
+  | _ as c                      { failwith (Format.sprintf "invalid string starting with %C" c) }
