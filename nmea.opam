@@ -1,0 +1,34 @@
+opam-version: "2.0"
+name: "nmea"
+version: "0.1"
+maintainer: "Quentin Heath <12143333+qheath@users.noreply.github.com>"
+authors: "Quentin Heath <12143333+qheath@users.noreply.github.com>"
+license: "GPL-3"
+#homepage: ""
+#dev-repo: ""
+#bug-reports: ""
+build: [
+  ["jbuilder" "build" "-p" name "-j" jobs "@install"]
+  ["jbuilder" "build" "-p" name "-j" jobs "@runtest"] {with-test}
+  ["jbuilder" "build" "-p" name "-j" jobs "@doc"] {with-doc}
+]
+
+depends: [
+  "menhir" {build}
+  "jbuilder" {build}
+  "ptime" {build}
+  "patience_diff" {with-test}
+  "getarg" {with-test}
+  "odoc" {with-doc}
+]
+synopsis: "NMEA/GP file format (GPS data)"
+description: """
+Parsing and pretty-printing of [NMEA] files containing GPS data (GP
+talker sentences tagged GGA and RMC, such as created by a Sony
+HDR-AS200V).
+
+[NMEA]: http://freenmea.net/docs"""
+#url {
+#  src: ""
+#  checksum: ""
+#}

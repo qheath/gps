@@ -1,0 +1,9 @@
+(jbuild_version 1)
+
+(alias
+ ((name runtest)
+  (deps (src/test.bc))
+  (action
+   (progn
+    (run ${<} -i ../../data/in.nmea -o ../../data/out.nmea)
+    (run patdiff -keep-whitespace ../../data/in.nmea ../../data/out.nmea)))))
