@@ -5,5 +5,5 @@
   (public_name gps.trajectory)
   (synopsis "GPS trajectories")
   (modules (Trajectory))
-  (libraries (nelist gg vg))
+  (libraries (nelist gg vg jupiteri vg.cairo))
   (flags (:standard -warn-error A))))
