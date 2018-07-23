@@ -1,6 +1,6 @@
 %token <(int * int * int)> DATE
 %token <(int * int * float)> TIME
-%token <Coordinates.coordinate> COORD
+%token <Coordinates.Coordinate.t> COORD
 
 %token <int> NAT
 %token <float> REAL
