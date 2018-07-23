@@ -1,0 +1,9 @@
+(jbuild_version 1)
+
+(library
+ ((name trajectory)
+  (public_name gps.trajectory)
+  (synopsis "GPS trajectories")
+  (modules (Trajectory))
+  (libraries (nelist gg vg))
+  (flags (:standard -warn-error A))))
