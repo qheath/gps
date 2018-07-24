@@ -5,5 +5,10 @@
   (deps (src/test.bc))
   (action
    (progn
-    (run ${<} -i ../../data/in.nmea -o ../../data/out.nmea)
-    (run patdiff -keep-whitespace ../../data/in.nmea ../../data/out.nmea)))))
+    (run jbuilder build src/test.bc)
+    (run rm -rf ../../data/foo ../../data/bar ../../data/frames)
+    (run mkdir -p ../../data/foo ../../data/bar ../../data/frames)
+    (run cp ../../data/foo.nmea ../../data/foo/in.nmea)
+    (run cp ../../data/bar.nmea ../../data/bar/in.nmea)
+    (run ${<} -vv -d ../../data -i foo -i bar)
+    (run feh ../../data/frames)))))

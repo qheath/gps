@@ -1,2 +1,6 @@
 .merlin
-/data/out.nmea
+/data/foo.nmea
+/data/foo
+/data/bar.nmea
+/data/bar
+/data/frames

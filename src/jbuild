@@ -2,6 +2,6 @@
 
 (executable
  ((name test)
-  (libraries (patience_diff getarg jupiteri gps.nmea))
+  (libraries (getarg jupiteri gps.nmea gps.trajectory))
   (modules (Test))
   (flags (:standard -warn-error A))))

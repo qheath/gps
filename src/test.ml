@@ -16,20 +16,30 @@
 (* along with this program.  If not, see <http://www.gnu.org/licenses/>.    *)
 (****************************************************************************)
 
+let dir = ref "data"
+
+let ifile name =
+  Printf.sprintf "%s/%s/in.nmea" !dir name
+and ofile name =
+  Printf.sprintf "%s/%s/out.nmea" !dir name
+and odir () =
+  Printf.sprintf "%s/frames" !dir
+
 let parse_args () =
-  let ifile = ref "data/in.nmea"
-  and ofile = ref "data/out.nmea"
-  and delay = ref 0 in
+  let names = ref [] in
 
   let longopts = GetArg.[
-    ('i',"input",Printf.sprintf "file where to read [%s]" !ifile),
-    set_string ifile ;
+    ('v',"verbose"," increase verbosity"),
+    GetArg.Lone JupiterI.Output.Verbosity.moreTalk ;
 
-    ('o',"output",Printf.sprintf "file where to write [%s]" !ofile),
-    set_string ofile ;
+    ('q',"quiet"," decrease verbosity"),
+    GetArg.Lone JupiterI.Output.Verbosity.lessTalk ;
 
-    ('d',"delay",Printf.sprintf "seconds how much to shift forward [%d]" !delay),
-    set_int delay ;
+    ('d',"directory",Printf.sprintf "directory where to read and write [%s]" !dir),
+    set_string dir ;
+
+    ('i',"input","name what to read (multiple)"),
+    GetArg.(Mandatory (String (fun s -> names := s :: !names))) ;
   ] and usage =
     Printf.sprintf
       "usage: %s [<options>]"
@@ -37,51 +47,97 @@ let parse_args () =
   in
 
   GetArg.parse longopts ignore usage ;
-  !ifile,!ofile,!delay
+  !names
 
+let prepare_names = function
+  | [] ->
+    JupiterI.Output.wprintf "nothing to do, leaving" ;
+    None
+  | [name] ->
+    let ns = name,Trajectory.Atom.Left in
+    NEList.of_list [ns]
+  | [name0;name1] ->
+    let ns0 = name0,Trajectory.Atom.Left
+    and ns1 = name1,Trajectory.Atom.Right in
+    NEList.of_list [ns0;ns1]
+  | names ->
+    JupiterI.Output.eprintf "too much to do (%d), leaving"
+      (List.length names) ;
+    None
 
-let () =
-  let ifile,ofile,_delay = parse_args () in
-  match
-    let ic = open_in ifile in
+let build_atoms =
+  let read name =
+    let ic = open_in @@ ifile name in
     let segments =
       let lexbuf = Lexing.from_channel ic in
       match NMEA.Input.parse_sony_gps_file lexbuf with
-      | Yes segments -> Some segments
-      | Parser (state,position) ->
+      | NMEA.Input.Yes segments -> Some segments
+      | NMEA.Input.Parser (state,position) ->
         begin
           match
             (*try Some (Parser_messages.message (Interp.number state))
-            with Not_found ->*) None
+              with Not_found ->*) None
           with
           | None ->
-            Format.eprintf "%a: parser state %d reached, cannot go forward@."
+            JupiterI.Output.eprintf
+              "%a: parser state %d reached, cannot go forward@."
               JupiterI.Pos.pp (JupiterI.Pos.of_positions position) state
           | Some message ->
-            Format.eprintf "%a: %s@."
+            JupiterI.Output.eprintf "%a: %s@."
               JupiterI.Pos.pp (JupiterI.Pos.of_positions position) message
         end ;
         None
-      | Lexer (message) ->
+      | NMEA.Input.Lexer message ->
         Format.eprintf "%a: lexing error: %S@."
           JupiterI.Pos.pp (JupiterI.Pos.of_lexbuf lexbuf ()) message ;
         None
     in
     close_in ic ;
     segments
-  with
-  | None -> ()
-  | Some segments ->
-    let oc = open_out ofile in
+  and write name segments =
+    let oc = open_out @@ ofile name in
     let fmt = Format.formatter_of_out_channel oc in
-    let aux ((time0,(time1,time2)),sentences) =
-      NMEA.GP.fprintlf fmt "/%a%a/"
-        NMEA.Utils.pp_date time0 NMEA.Utils.pp_time time0 ;
-      NMEA.GP.fprintlf fmt "/%a%a/%a%a/"
-        NMEA.Utils.pp_date time1 NMEA.Utils.pp_time time1
-        NMEA.Utils.pp_date time2 NMEA.Utils.pp_time time2 ;
-      List.iter (NMEA.GP.pp fmt) sentences
-    in
-    List.iter aux segments ;
-    close_out oc ;
-    ()
+    NEList.iter (NMEA.GP.pp_segment fmt) (fun _ _ -> ()) segments ;
+    close_out oc
+  in
+  let aux (name,switch) atoms' =
+    match read name with
+    | None ->
+      JupiterI.Output.wprintf "cannot read %s, ignoring" name ;
+      atoms'
+    | Some segments ->
+      write name segments ;
+      let _start,trajectory = NMEA.GP.segments_to_trajectory segments in
+      match NEList.of_list trajectory with
+      | None -> atoms'
+      | Some points ->
+        let atoms =
+          NEList.push (Trajectory.Cluster.of_points points,switch) atoms'
+        in
+        Some atoms
+  in
+  fun prepared_names ->
+    NEList.fold aux (fun _ _ atoms' -> atoms') prepared_names None
+
+let () =
+  let names = parse_args () in
+  match prepare_names names with
+  | None -> ()
+  | Some prepared_names ->
+    match build_atoms prepared_names with
+    | None -> ()
+    | Some atoms ->
+      let _atoms,average' =
+        Trajectory.Interleave.process ~odir:(odir ()) atoms
+      in
+      match average' with
+      | None -> ()
+      | Some average ->
+        let print (t0,p,t1,switch1) =
+          let t_left,t_right = match switch1 with
+            | Trajectory.Atom.Left -> t1,t0
+            | Trajectory.Atom.Right -> t0,t1
+          in
+          Format.eprintf "%a: %.2f -- %.2f@." Gg.V2.pp p t_left t_right
+        in
+        NEList.iter print (fun _ _ -> ()) average
