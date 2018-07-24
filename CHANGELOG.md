@@ -1,3 +1,9 @@
+0.3 (2018-07-24)
+================
+Features
+--------
+  - pairwise matching of trajectories
+
 0.1 (2018-07-06)
 ================
   Initial working release
