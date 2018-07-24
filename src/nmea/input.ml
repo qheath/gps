@@ -1,7 +1,7 @@
 module Interp = Parser.MenhirInterpreter
 
 type answer =
-  | Yes of GP.segment list
+  | Yes of GP.segment NEList.t
   | Parser of int * (Lexing.position * Lexing.position)
   | Lexer of string
 

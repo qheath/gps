@@ -1,6 +1,6 @@
 type answer =
   (** Input success. *)
-  | Yes of GP.segment list
+  | Yes of GP.segment NEList.t
 
   (** Parsing error (current state, and position of the last lexeme). *)
   | Parser of int * (Lexing.position * Lexing.position)

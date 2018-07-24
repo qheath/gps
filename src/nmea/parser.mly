@@ -16,7 +16,7 @@
 %token EOL EOF
 
 %start sony_gps_file
-%type <GP.segment list> sony_gps_file
+%type <GP.segment NEList.t> sony_gps_file
 
 
 %%
@@ -31,8 +31,8 @@ segments:
  */
 
 sony_gps_file:
-  | l = list(sony_gps_segment) EOF
-                                { l }
+  | h = sony_gps_segment ; t = list(sony_gps_segment) EOF
+                                { NEList.(push h (of_list t)) }
 
 sony_gps_segment:
   | sony_header sentences       { $1,$2 }

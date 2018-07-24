@@ -11,5 +11,5 @@
   (public_name gps.nmea)
   (synopsis "NMEA/GP file format (GPS data)")
   (modules (Coordinates Utils GP Sentence Parser Lexer Input))
-  (libraries (ptime menhirLib gg))
+  (libraries (nelist ptime menhirLib gg))
   (flags (:standard -warn-error A))))

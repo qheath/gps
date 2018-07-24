@@ -37,7 +37,7 @@ module Talker : sig
          float option * (** Magnetic Variation, degrees + E or W *)
          int) (** Checksum *)
 
-  val to_point : t -> Gg.V3.t option
+  val to_point : start:Ptime.t -> t -> Gg.V3.t option
 
 end
 
@@ -58,4 +58,4 @@ val pp_times :
 
 val pp_segment : Format.formatter -> segment -> unit
 
-val segments_to_trajectory : segment list -> Gg.V3.t list
+val segments_to_trajectory : segment NEList.t -> Ptime.t * Gg.V3.t list

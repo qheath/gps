@@ -2,7 +2,7 @@ module type TALKER = sig
   val id : string
   type t
   val pp : Format.formatter -> t -> unit
-  val to_point : t -> Gg.V3.t option
+  val to_point : start:Ptime.t -> t -> Gg.V3.t option
 end
 
 module Make (T : TALKER) : sig
@@ -19,6 +19,6 @@ module Make (T : TALKER) : sig
   (** Output a sentence. *)
   val pp : Format.formatter -> t -> unit
 
-  val to_point : t -> Gg.V3.t option
+  val to_point : start:Ptime.t -> t -> Gg.V3.t option
 
 end

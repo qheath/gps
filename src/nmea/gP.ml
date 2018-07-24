@@ -68,11 +68,15 @@ module Talker = struct
              | None -> "")
           checksum
 
-  let to_point = function
+  let to_point ~start = function
     | GGA _ -> None
     | RMC (time,coordinates,_,_,_,_) ->
       let x,y = Coordinates.to_seconds coordinates
-      and z = Ptime.to_float_s time in
+      and z =
+        match Ptime.(diff time start |> of_span) with
+        | Some t -> Ptime.to_float_s t
+        | None -> 0.
+      in
       Some (Gg.V3.v x y z)
 
 end
@@ -92,13 +96,16 @@ let pp_segment fmt (times,sentences) =
   pp_times fmt times ;
   List.iter (pp fmt) sentences
 
-let segment_to_trajectory ((t0,(t1,t2)),sentences) =
+let segment_to_trajectory ~start ((t0,(t1,t2)),sentences) =
   let aux points sentence =
-    match to_point sentence with
+    match to_point ~start sentence with
     | Some point -> point::points
     | None -> points
   in
   List.rev @@ List.fold_left aux [] sentences
 
 let segments_to_trajectory segments =
-  List.flatten @@ List.map segment_to_trajectory segments
+  let ((start,_),_),_ = NEList.pop segments in
+  start,
+  List.flatten @@
+  NEList.(map (segment_to_trajectory ~start) segments |> to_list)
