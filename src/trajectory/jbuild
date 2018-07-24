@@ -4,6 +4,6 @@
  ((name trajectory)
   (public_name gps.trajectory)
   (synopsis "GPS trajectories")
-  (modules (Trajectory))
+  (modules (Point Cluster Atom Render Interleave))
   (libraries (nelist gg vg jupiteri vg.cairo))
   (flags (:standard -warn-error A))))

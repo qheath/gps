@@ -30,16 +30,16 @@ let parse_args () =
 
   let longopts = GetArg.[
     ('v',"verbose"," increase verbosity"),
-    GetArg.Lone JupiterI.Output.Verbosity.moreTalk ;
+    Lone JupiterI.Output.Verbosity.moreTalk ;
 
     ('q',"quiet"," decrease verbosity"),
-    GetArg.Lone JupiterI.Output.Verbosity.lessTalk ;
+    Lone JupiterI.Output.Verbosity.lessTalk ;
 
     ('d',"directory",Printf.sprintf "directory where to read and write [%s]" !dir),
     set_string dir ;
 
     ('i',"input","name what to read (multiple)"),
-    GetArg.(Mandatory (String (fun s -> names := s :: !names))) ;
+    (Mandatory (String (fun s -> names := s :: !names))) ;
   ] and usage =
     Printf.sprintf
       "usage: %s [<options>]"
