@@ -6,6 +6,7 @@ module Point : sig
   val to_path : radius:float -> t -> Vg.path -> Vg.path
   val pair_to_path : t -> t -> Vg.path -> Vg.path
   val to_box : t -> Gg.Box3.t
+  val pp : Format.formatter -> t -> unit
 
   (* misc *)
   val barycentre : (t * float) NEList.t -> (t * float)
@@ -24,6 +25,8 @@ end = struct
 
   let to_box point =
     Gg.(Box3.v_mid point Size3.zero)
+
+  let pp = Gg.V3.pp
 
   (* misc *)
 
@@ -69,6 +72,7 @@ module Cluster : sig
   (* export *)
   val to_path : point_radius:float -> t -> Vg.path -> Vg.path
   val to_box : t -> Gg.Box3.t
+  val pp : Format.formatter -> t -> unit
 
   (* misc *)
   val size : t -> int
@@ -183,6 +187,12 @@ end = struct
   let to_box =
     binop Point.to_box Gg.Box3.union
 
+  let pp fmt (point0,(point,_,_),point1) =
+    Format.fprintf fmt "[%a ; %a ; %a]"
+      Point.pp point0
+      Point.pp point
+      Point.pp point1
+
   (* misc *)
 
   (*
@@ -212,7 +222,7 @@ end = struct
    *)
 
   let pp fmt cluster =
-    let f point () = Format.fprintf fmt "%a" Gg.V3.pp point
+    let f point () = Format.fprintf fmt "%a" Point.pp point
     and g _ _ () = () in
     fold f g cluster ()
 
@@ -260,6 +270,7 @@ module Atom : sig
     point_radius:float -> t NEList.t -> (Vg.path * Vg.path * Vg.path) ->
     Vg.path * Vg.path * Vg.path
   val to_box : t NEList.t -> Gg.Box2.t
+  val pp : Format.formatter -> t -> unit
 
   (* misc *)
   val binop :
@@ -304,6 +315,11 @@ end = struct
       Gg.(Box2.of_pts (V2.of_v3 @@ Box3.min box3) (V2.of_v3 @@ Box3.max box3))
     in
     binop f Gg.Box2.union
+
+  let pp fmt (cluster,switch) =
+    Format.fprintf fmt "[%s]%a"
+      (match switch with Left -> "Left" | Right -> "Right")
+      Cluster.pp cluster
 
   (* misc *)
 
@@ -477,7 +493,7 @@ module Render = struct
           let path =
             let cluster =
               Cluster.of_points @@
-              NEList.map (fun (_,p,_) -> Gg.V3.of_v2 p ~z:0.) average
+              NEList.map (fun (_,p,_,_) -> Gg.V3.of_v2 p ~z:0.) average
             in
             Vg.P.empty
             |> Cluster.to_path ~point_radius:box_point_radius cluster
@@ -504,7 +520,7 @@ end
 module Interleave : sig
 
   val process : odir:string -> Atom.t NEList.t ->
-    Atom.t NEList.t * (float * Gg.V2.t * float) NEList.t option
+    Atom.t NEList.t * (float * Gg.V2.t * float * Atom.switch) NEList.t option
 
 end = struct
 
@@ -616,7 +632,7 @@ end = struct
       SplitableN ((backward1',atom1,forward1'),threshold)
 
   let average =
-    let aux ((cluster0,_),(cluster1,_),(cluster2,_)) =
+    let aux ((cluster0,_),(cluster1,switch1),(cluster2,_)) =
       let point02 = Cluster.middle cluster0 cluster2
       and point1 = Cluster.to_point cluster1 in
       let t02 = Gg.V3.z point02
@@ -624,7 +640,7 @@ end = struct
       let point,_ =
         Point.barycentre NEList.(push (point02,1.) (Some (push (point1,1.) None)))
       in
-      t02,Gg.V2.of_v3 point,t1
+      t02,Gg.V2.of_v3 point,t1,switch1
     in
     fun atoms ->
       let f _ pairs = pairs
