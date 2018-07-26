@@ -66,47 +66,13 @@ let prepare_names = function
     None
 
 let build_atoms =
-  let read name =
-    let ic = open_in @@ ifile name in
-    let segments =
-      let lexbuf = Lexing.from_channel ic in
-      match NMEA.Input.parse_sony_gps_file lexbuf with
-      | NMEA.Input.Yes segments -> Some segments
-      | NMEA.Input.Parser (state,position) ->
-        begin
-          match
-            (*try Some (Parser_messages.message (Interp.number state))
-              with Not_found ->*) None
-          with
-          | None ->
-            JupiterI.Output.eprintf
-              "%a: parser state %d reached, cannot go forward@."
-              JupiterI.Pos.pp (JupiterI.Pos.of_positions position) state
-          | Some message ->
-            JupiterI.Output.eprintf "%a: %s@."
-              JupiterI.Pos.pp (JupiterI.Pos.of_positions position) message
-        end ;
-        None
-      | NMEA.Input.Lexer message ->
-        Format.eprintf "%a: lexing error: %S@."
-          JupiterI.Pos.pp (JupiterI.Pos.of_lexbuf lexbuf ()) message ;
-        None
-    in
-    close_in ic ;
-    segments
-  and write name segments =
-    let oc = open_out @@ ofile name in
-    let fmt = Format.formatter_of_out_channel oc in
-    NEList.iter (NMEA.GP.pp_segment fmt) (fun _ _ -> ()) segments ;
-    close_out oc
-  in
   let aux (name,switch) atoms' =
-    match read name with
+    match NMEA.Input.read_sony_gps_file @@ ifile name with
     | None ->
       JupiterI.Output.wprintf "cannot read %s, ignoring" name ;
       atoms'
     | Some segments ->
-      write name segments ;
+      NMEA.Output.write_sony_gps_file (ofile name) segments ;
       let _start,trajectory = NMEA.GP.segments_to_trajectory segments in
       match NEList.of_list trajectory with
       | None -> atoms'

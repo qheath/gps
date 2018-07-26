@@ -22,3 +22,32 @@ let parse_sony_gps_file lexbuf =
     Interp.loop_handle success failure input
       (Parser.Incremental.sony_gps_file lexbuf.Lexing.lex_curr_p)
   with e -> Lexer (Printexc.to_string e)
+
+let read_sony_gps_file path =
+  let ic = open_in path in
+  let segments =
+    let lexbuf = Lexing.from_channel ic in
+    match parse_sony_gps_file lexbuf with
+    | Yes segments -> Some segments
+    | Parser (state,position) ->
+      begin
+        match
+          (*try Some (Parser_messages.message (Interp.number state))
+            with Not_found ->*) None
+        with
+        | None ->
+          JupiterI.Output.eprintf
+            "%a: parser state %d reached, cannot go forward@."
+            JupiterI.Pos.pp (JupiterI.Pos.of_positions position) state
+        | Some message ->
+          JupiterI.Output.eprintf "%a: %s@."
+            JupiterI.Pos.pp (JupiterI.Pos.of_positions position) message
+      end ;
+      None
+    | Lexer message ->
+      Format.eprintf "%a: lexing error: %S@."
+        JupiterI.Pos.pp (JupiterI.Pos.of_lexbuf lexbuf ()) message ;
+      None
+  in
+  close_in ic ;
+  segments

@@ -10,6 +10,6 @@
  ((name nMEA)
   (public_name gps.nmea)
   (synopsis "NMEA/GP file format (GPS data)")
-  (modules (Coordinates Utils GP Sentence Parser Lexer Input))
-  (libraries (nelist ptime menhirLib gg))
+  (modules (Coordinates Utils GP Sentence Parser Lexer Input Output))
+  (libraries (nelist ptime menhirLib gg jupiteri))
   (flags (:standard -warn-error A))))
