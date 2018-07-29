@@ -115,6 +115,11 @@ let pp fmt (point0,(point,_,_),point1) =
     Point.pp point
     Point.pp point1
 
+let pp_full fmt cluster =
+  let f point () = Format.fprintf fmt "%a" Point.pp point
+  and g _ _ () = () in
+  fold f g cluster ()
+
 (* misc *)
 
 (*
@@ -142,11 +147,6 @@ let generate_example ?(dx=tau) n =
   in
   of_points points
  *)
-
-let pp fmt cluster =
-  let f point () = Format.fprintf fmt "%a" Point.pp point
-  and g _ _ () = () in
-  fold f g cluster ()
 
 (*
 let total_length css =

@@ -16,9 +16,11 @@ let render_renderable ~filename ~fmt ~renderable =
   in
   close_out oc
 
+(*
 let fill_path ~colour path =
   let area = `Aeo in
   Vg.I.const colour |> Vg.I.cut ~area path
+ *)
 
 let stroke_path ~colour ~stroke_width path =
   let area = `O { Vg.P.o with Vg.P.width = stroke_width } in

@@ -1,9 +1,0 @@
-(jbuild_version 1)
-
-(library
- ((name trajectory)
-  (public_name gps.trajectory)
-  (synopsis "GPS trajectories")
-  (modules (Point Cluster Atom Render Interleave))
-  (libraries (nelist gg vg jupiteri vg.cairo))
-  (flags (:standard -warn-error A))))

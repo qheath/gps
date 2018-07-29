@@ -26,7 +26,7 @@ let clusterise =
       match forward0' with
       | None -> NEList.push (clusters0,s0) backward0'
       | Some forward1 ->
-        let (cluster1,s1 as atom1),forward1' = NEList.pop forward1 in
+        let (cluster1,s1),forward1' = NEList.pop forward1 in
         let backward1',clusters1' =
           if s0=s1 then backward0',Some clusters0
           else Some (NEList.push (clusters0,s0) backward0'),None

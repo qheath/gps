@@ -23,6 +23,7 @@ val binop :
 val to_path : point_radius:float -> t -> Vg.path -> Vg.path
 val to_box : t -> Gg.Box3.t
 val pp : Format.formatter -> t -> unit
+val pp_full : Format.formatter -> t -> unit
 
 (* misc *)
 val size : t -> int
