@@ -1,20 +1,20 @@
 opam-version: "2.0"
-version: "0.4"
+version: "0.5"
 maintainer: "Quentin Heath <12143333+qheath@users.noreply.github.com>"
 authors: "Quentin Heath <12143333+qheath@users.noreply.github.com>"
+homepage: "https://github.com/qheath/gps"
+bug-reports: "https://github.com/qheath/gps/issues"
+dev-repo: "git://github.com/qheath/gps.git"
 license: "GPL-3"
-#homepage: ""
-#dev-repo: ""
-#bug-reports: ""
 build: [
-  ["jbuilder" "build" "-p" name "-j" jobs "@install"]
-  ["jbuilder" "build" "-p" name "-j" jobs "@runtest"] {with-test}
-  ["jbuilder" "build" "-p" name "-j" jobs "@doc"] {with-doc}
+  ["dune" "build" "-p" name "-j" jobs "@install"]
+  ["dune" "build" "-p" name "-j" jobs "@runtest"] {with-test}
+  ["dune" "build" "-p" name "-j" jobs "@doc"] {with-doc}
 ]
 
 depends: [
   "menhir" {build}
-  "jbuilder" {build}
+  "dune" {build}
   "ptime" {build}
   "patience_diff" {with-test}
   "getarg" {with-test}
