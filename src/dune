@@ -1,0 +1,4 @@
+(executable
+ (name test)
+ (libraries getarg jupiteri gps.nmea gps.trajectory)
+ (modules ("Test")))

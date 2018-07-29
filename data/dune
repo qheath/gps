@@ -1,0 +1,10 @@
+(alias
+ (name frames)
+ (deps    (:test ../src/test.bc) foo/out.nmea bar/out.nmea)
+ (action
+  (progn
+   (diff foo/in.nmea foo/out.nmea)
+   (diff bar/in.nmea bar/out.nmea)
+   (run rm -rf frames)
+   (run mkdir -p frames)
+   (run %{test} -vv -d . -i foo -i bar -f))))

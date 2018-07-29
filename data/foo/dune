@@ -1,0 +1,6 @@
+(rule
+ (targets out.nmea)
+ (deps (:test ../../src/test.bc) (:in in.nmea))
+ (action
+  (progn
+   (run %{test} -vv -d .. -i foo))))

@@ -1,0 +1,12 @@
+(env
+ (dev
+  (flags (:standard -w +a-4-9-42-44 -warn-error +a-4-9-42-44)))
+ (release
+  (flags (:standard -w +a))))
+
+(alias
+ (name    runtest)
+ (deps    (alias data/frames))
+ (action
+  (progn
+   (run feh --theme default data/frames))))

@@ -1,7 +1,0 @@
-(jbuild_version 1)
-
-(executable
- ((name test)
-  (libraries (getarg jupiteri gps.nmea gps.trajectory))
-  (modules (Test))
-  (flags (:standard -warn-error A))))

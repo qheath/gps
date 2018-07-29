@@ -26,7 +26,8 @@ and odir () =
   Printf.sprintf "%s/frames" !dir
 
 let parse_args () =
-  let names = ref [] in
+  let names = ref []
+  and frames = ref false in
 
   let longopts = GetArg.[
     ('v',"verbose"," increase verbosity"),
@@ -40,6 +41,9 @@ let parse_args () =
 
     ('i',"input","name what to read (multiple)"),
     (Mandatory (String (fun s -> names := s :: !names))) ;
+
+    ('f',"frames","directory build frames instead of copying NMEA files"),
+    set_bool frames ;
   ] and usage =
     Printf.sprintf
       "usage: %s [<options>]"
@@ -47,7 +51,7 @@ let parse_args () =
   in
 
   GetArg.parse longopts ignore usage ;
-  !names
+  !names,!frames
 
 let prepare_names = function
   | [] ->
@@ -67,12 +71,11 @@ let prepare_names = function
 
 let build_atoms =
   let aux (name,switch) atoms' =
-    match NMEA.Input.read_sony_gps_file @@ ifile name with
+    match NMEA.Input.read_sony_gps_file @@ ofile name with
     | None ->
       JupiterI.Output.wprintf "cannot read %s, ignoring" name ;
       atoms'
     | Some segments ->
-      NMEA.Output.write_sony_gps_file (ofile name) segments ;
       let _start,trajectory = NMEA.GP.segments_to_trajectory segments in
       match NEList.of_list trajectory with
       | None -> atoms'
@@ -85,25 +88,40 @@ let build_atoms =
   fun prepared_names ->
     NEList.fold aux (fun _ _ atoms' -> atoms') prepared_names None
 
+let copy_names =
+  let copy name =
+    match NMEA.Input.read_sony_gps_file @@ ifile name with
+    | None ->
+      JupiterI.Output.wprintf "cannot read %s, ignoring" name
+    | Some segments ->
+      NMEA.Output.write_sony_gps_file (ofile name) segments
+  in
+  List.iter copy
+
 let () =
-  let names = parse_args () in
-  match prepare_names names with
-  | None -> ()
-  | Some prepared_names ->
-    match build_atoms prepared_names with
+  let names,frames = parse_args () in
+  if frames then begin
+    match prepare_names names with
     | None -> ()
-    | Some atoms ->
-      let _atoms,average' =
-        Trajectory.Interleave.process ~odir:(odir ()) atoms
-      in
-      match average' with
+    | Some prepared_names ->
+      match build_atoms prepared_names with
       | None -> ()
-      | Some average ->
-        let print (t0,p,t1,switch1) =
-          let t_left,t_right = match switch1 with
-            | Trajectory.Atom.Left -> t1,t0
-            | Trajectory.Atom.Right -> t0,t1
-          in
-          Format.eprintf "%a: %.2f -- %.2f@." Gg.V2.pp p t_left t_right
+      | Some atoms ->
+        let _atoms,average' =
+          Trajectory.Interleave.process ~odir:(odir ()) atoms
         in
-        NEList.iter print (fun _ _ -> ()) average
+        match average' with
+        | None -> ()
+        | Some average ->
+          let print (t0,p,t1,switch1) =
+            let t_left,t_right = match switch1 with
+              | Trajectory.Atom.Left -> t1,t0
+              | Trajectory.Atom.Right -> t0,t1
+            in
+            Format.eprintf "%a: %.2f -- %.2f@." Gg.V2.pp p t_left t_right
+          in
+          NEList.iter print (fun _ _ -> ()) average
+  end else begin
+    copy_names names
+  end
+
