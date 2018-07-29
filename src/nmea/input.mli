@@ -1,14 +1,14 @@
 (** {6 Low-level access} *)
 
 type answer =
-  (** Input success. *)
   | Yes of GP.segment NEList.t
+  (** Input success. *)
 
-  (** Parsing error (current state, and position of the last lexeme). *)
   | Parser of int * (Lexing.position * Lexing.position)
+  (** Parsing error (current state, and position of the last lexeme). *)
 
-  (** Lexing error (internal lexer error message). *)
   | Lexer of string
+  (** Lexing error (internal lexer error message). *)
 
 (** Parse some Sony GPS file segments. *)
 val parse_sony_gps_file : Lexing.lexbuf -> answer

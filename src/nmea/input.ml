@@ -6,7 +6,6 @@ type answer =
   | Lexer of string
 
 let parse_sony_gps_file lexbuf =
-  let open MenhirLib.General in
   let input = Interp.lexer_lexbuf_to_supplier Lexer.token lexbuf
   and success x = Yes x
   and failure = function

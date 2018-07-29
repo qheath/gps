@@ -65,11 +65,29 @@ talker_sentence:
 
 gp_gga_sentence:
   | time COMMA coords COMMA NAT COMMA NAT COMMA COMMA COMMA UNIT COMMA COMMA UNIT COMMA COMMA STAR checksum
-        { $1,$3,$5,$7,None,None,None,None,0,$18 }
+        { GP.Talker.({
+            ptime = $1 ;
+            coordinates = $3 ;
+            gps_quality = $5 ;
+            satellites_number = $7 ;
+            dilution = None ;
+            antenna_altitude = None ;
+            separation = None ;
+            age = None ;
+            station_id = 0 ;
+            checksum = $18 ;
+        })}
 
 gp_rmc_sentence:
   | TIME COMMA STATUS COMMA coords COMMA REAL COMMA COMMA DATE COMMA COMMA COMMA STATUS STAR checksum
-        { Utils.utc_of_dt ($10,$1),$5,$7,None,None,$16 }
+        { GP.Talker.({
+            ptime = Utils.utc_of_dt ($10,$1) ;
+            coordinates = $5 ;
+            speed = $7 ;
+            track = None ;
+            variation = None ;
+            checksum = $16 ;
+        })}
 
 date_time:
   | DATE TIME                   { Utils.utc_of_dt ($1,$2) }

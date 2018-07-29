@@ -12,6 +12,7 @@ end
 
 type t = (Coordinate.t * ns) * (Coordinate.t * ew)
 
+val pp : Format.formatter -> t -> unit
 val pp_nmea : Format.formatter -> t -> unit
 
 val to_seconds : t -> float * float

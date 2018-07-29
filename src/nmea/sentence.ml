@@ -12,15 +12,15 @@ module Make (T : TALKER) = struct
     | Proprietary
     | Query
 
-  let fprintlf chan fmt =
-    Format.fprintf chan (fmt ^^ "\r\n%!")
+  let fprintlf fmt f =
+    Format.fprintf fmt (f ^^ "\r\n%!")
 
-  let pp chan =
-    let aux id f = fprintlf chan "$%s%a" id f in
+  let pp fmt =
+    let aux id f = fprintlf fmt "$%s%a" id f in
     function
       | Talker talker -> aux T.id T.pp talker
-      | Proprietary -> aux "" (fun chan () -> ()) ()
-      | Query -> aux "" (fun chan () -> ()) ()
+      | Proprietary -> aux "" (fun _fmt () -> ()) ()
+      | Query -> aux "" (fun _fmt () -> ()) ()
 
   let to_point ~start = function
     | Talker talker_sentence -> T.to_point ~start talker_sentence

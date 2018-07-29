@@ -5,55 +5,67 @@ module Talker = struct
 
   let id = "GP"
 
-  (* Talker sentences *)
-  type t =
-    (* Fix information:
-     * UTC date/time, position *)
-    | GGA of
-        (Ptime.t * (* POSIX time of day wrt epoch (UTC) *)
-         Coordinates.t * (* Latitude, Longitude *)
-         int * (* GPS Quality Indicator (none/fix/differential fix) *)
-         int * (* Number of satellites in view, 00 - 12 *)
-         float option * (* Horizontal Dilution of precision *)
-         float option * (* Antenna Altitude above/below mean-sea-level
-                         * (geoid) *)
-         (* Units of antenna altitude, meters *)
-         float option * (* Geoidal separation, the difference between the
-                         * WGS-84 earth ellipsoid and mean-sea-level
-                         * (geoid), "-" means mean-sea-level below
-                         * ellipsoid *)
-         (* Units of geoidal separation, meters *)
-         float option * (* Age of differential GPS data, time in seconds
-                         * since last SC104 type 1 or 9 update, null field
-                         * when DGPS is not used *)
-         int * (* Differential reference station ID, 0000-1023 *)
-         int) (* Checksum *)
+  (* Fix information:
+   * UTC date/time, position *)
+  type gga = {
+    ptime : Ptime.t ; (* POSIX time of day wrt epoch (UTC) *)
+    coordinates : Coordinates.t ; (* Latitude, Longitude *)
+    gps_quality : int ; (* GPS Quality Indicator (none/fix/differential
+                         * fix) *)
+    satellites_number : int ; (* Number of satellites in view, 00 - 12 *)
+    dilution : float option ; (* Horizontal Dilution of precision *)
+    antenna_altitude : float option ; (* Antenna Altitude above/below
+                                       * mean-sea-level (geoid) *)
+    (*
+    antenna_altitude_unit : char ; (* Units of antenna altitude, meters *)
+     *)
+    separation : float option ; (* Geoidal separation, the difference
+                                 * between the WGS-84 earth ellipsoid
+                                 * and mean-sea-level (geoid), "-" means
+                                 * mean-sea-level below ellipsoid *)
+    (*
+    separation_unit : char ; (* Units of geoidal separation, meters *)
+     *)
+    age : float option ; (* Age of differential GPS data, time in
+                          * seconds since last SC104 type 1 or 9 update,
+                          * null field when DGPS is not used *)
+    station_id : int ; (* Differential reference station ID, 0000-1023 *)
+    checksum : int ; (* Checksum *)
+  }
 
-    (* Recommended minimum data for gps:
-     * UTC date/time, position, course, speed *)
-    | RMC of
-        (Ptime.t * (* POSIX time (UTC) *)
-         Coordinates.t * (* Latitude, Longitude *)
-         float * (* Speed over ground, knots *)
-         float option * (* Track made good, degrees true *)
-         float option * (* Magnetic Variation, degrees + E or W *)
-         int) (* Checksum *)
+  (* Recommended minimum data for gps:
+   * UTC date/time, position, course, speed *)
+  type rmc = {
+    ptime : Ptime.t ; (* POSIX time of day (UTC) *)
+    coordinates : Coordinates.t ; (* Latitude, Longitude *)
+    speed : float ; (* Speed over ground, knots *)
+    track : float option ; (* Track made good, degrees true *)
+    variation : float option ; (* Magnetic Variation, degrees + E or W *)
+    checksum : int ; (* Checksum *)
+  }
+
+  (** Talker sentences *)
+  type t =
+    | GGA of gga (** Fix information:
+                  * UTC date/time, position *)
+    | RMC of rmc (** Recommended minimum data for gps:
+                  * UTC date/time, position, course, speed *)
 
   (* Output a talker sentence. *)
   let pp chan = function
-    | GGA (ptime,coordinates,quality,number,dilution,
-           altitude,separation,age,reference,checksum) ->
+    | GGA {ptime;coordinates;gps_quality;satellites_number;dilution;
+           antenna_altitude;separation;age;station_id;checksum} ->
         Format.fprintf chan "GGA,%a,%a,%d,%d,%s,%s,M,%s,M,%s,%s*%X"
           Utils.pp_time ptime
           Coordinates.pp_nmea coordinates
-          quality number
+          gps_quality satellites_number
           (match dilution with Some f -> string_of_float f | None -> "")
-          (match altitude with Some f -> string_of_float f | None -> "")
+          (match antenna_altitude with Some f -> string_of_float f | None -> "")
           (match separation with Some f -> string_of_float f | None -> "")
           (match age with Some f -> string_of_float f | None -> "")
-          (if reference=0 then "" else Printf.sprintf "%.4d" reference)
+          (if station_id=0 then "" else Printf.sprintf "%.4d" station_id)
           checksum
-    | RMC (ptime,coordinates,speed,track,variation,checksum) ->
+    | RMC {ptime;coordinates;speed;track;variation;checksum} ->
         Format.fprintf chan "RMC,%a,A,%a,%.2f,%s,%a,%s,%s,A*%X"
           Utils.pp_time ptime
           Coordinates.pp_nmea coordinates
@@ -70,10 +82,10 @@ module Talker = struct
 
   let to_point ~start = function
     | GGA _ -> None
-    | RMC (time,coordinates,_,_,_,_) ->
+    | RMC {ptime;coordinates;_} ->
       let x,y = Coordinates.to_seconds coordinates
       and z =
-        match Ptime.(diff time start |> of_span) with
+        match Ptime.(diff ptime start |> of_span) with
         | Some t -> Ptime.to_float_s t
         | None -> 0.
       in
@@ -96,7 +108,7 @@ let pp_segment fmt (times,sentences) =
   pp_times fmt times ;
   List.iter (pp fmt) sentences
 
-let segment_to_trajectory ~start ((t0,(t1,t2)),sentences) =
+let segment_to_trajectory ~start (_,sentences) =
   let aux points sentence =
     match to_point ~start sentence with
     | Some point -> point::points
