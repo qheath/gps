@@ -123,32 +123,6 @@ let pp_full fmt cluster =
 (* misc *)
 
 (*
-let generate_example ?(dx=tau) n =
-  let make_ideal_point t = Gg.V2.v t (sin t) in
-  let make_real_point ~n ~noise:(noise_speed_base,noise_radius) =
-    let noise_speed = Random.float noise_speed_base +. noise_speed_base /. 2.
-    and noise_offset = Random.float tau in
-    fun i ->
-      let t = (float)(max 0 (min i n)) /. ((float) n) *. dx in
-      let ideal_point = make_ideal_point t
-      and noise =
-        let noise_angle = noise_speed *. t +. noise_offset in
-        Gg.V2.(of_polar @@ v noise_radius noise_angle)
-      and subnoise =
-        let subnoise_radius = Random.float noise_radius
-        and subnoise_angle = Random.float tau in
-        Gg.V2.(of_polar @@ v subnoise_radius subnoise_angle)
-      in
-      Gg.(V3.of_v2 V2.(ideal_point + noise + subnoise) ~z:t)
-  in
-  let points =
-    NEList.init (n+1)
-      (make_real_point ~n ~noise:(2.,dx/.((float)n) /. 2.))
-  in
-  of_points points
- *)
-
-(*
 let total_length css =
   let f _ sum = sum
   and g p0 p1 sum = sum +. Gg.V2.(norm (p0 - p1)) in

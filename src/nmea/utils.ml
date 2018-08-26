@@ -29,6 +29,9 @@ let pp_time chan ptime =
   and frac = Ptime.Span.to_float_s @@ Ptime.frac_s ptime in
   Format.fprintf chan "%.2d%.2d%06.3f" h m ((float)s +. frac)
 
+let pp_datetime chan ptime =
+  Format.fprintf chan "%a%a" pp_date ptime pp_time ptime
+
 let checksum =
   let string_fold f seed s =
     let explode s =

@@ -3,6 +3,7 @@ module type TALKER = sig
   type t
   val pp : Format.formatter -> t -> unit
   val to_point : start:Ptime.t -> t -> Gg.V3.t option
+  val of_point : start:Ptime.t -> Gg.V3.t -> t option
 end
 
 module Make (T : TALKER) = struct
@@ -26,5 +27,10 @@ module Make (T : TALKER) = struct
     | Talker talker_sentence -> T.to_point ~start talker_sentence
     | Proprietary -> None
     | Query -> None
+
+  let of_point ~start point =
+    match T.of_point ~start point with
+    | None -> None
+    | Some talker_sentence -> Some (Talker talker_sentence)
 
 end

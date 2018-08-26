@@ -81,6 +81,8 @@ module Talker : sig
 
   val to_point : start:Ptime.t -> t -> Gg.V3.t option
 
+  val of_point : start:Ptime.t -> Gg.V3.t -> t option
+
 end
 
 type t =
@@ -99,5 +101,7 @@ val pp_times :
   Format.formatter -> (Ptime.t * (Ptime.t * Ptime.t)) -> unit
 
 val pp_segment : Format.formatter -> segment -> unit
+
+val trajectory_to_segment : start:Ptime.t -> Gg.V3.t list -> segment
 
 val segments_to_trajectory : segment NEList.t -> Ptime.t * Gg.V3.t list

@@ -35,6 +35,9 @@ module Coordinate = struct
     | DDM (d,dm) -> ((float)d *. 60. +. dm) *. 60.
     | DMDS (d,m,ds) -> ((float)d *. 60. +. (float)m) *. 60. +. ds
 
+  let of_ds ds =
+    DD (ds /. 3600.)
+
   let pp fmt = function
     | DD dd -> Format.fprintf fmt "%f°" dd
     | DDM (d,dm) -> Format.fprintf fmt "%d°%f'" d dm
@@ -43,12 +46,6 @@ module Coordinate = struct
 end
 
 type t = (Coordinate.t * ns) * (Coordinate.t * ew)
-
-(*
-let of_floats (latitude,longitude) =
-  (Coordinate.DD (abs_float latitude),(if latitude>0. then `N else `S)),
-  (Coordinate.DD (abs_float longitude),(if longitude>0. then `E else `W))
- *)
 
 let pp_nesw fmt nesw =
   let c = match nesw with
@@ -89,3 +86,14 @@ let ew_to_second (c,r) =
 
 let to_seconds (latitude,longitude) =
   ns_to_second latitude,ew_to_second longitude
+
+let ns_of_second ds =
+  Coordinate.of_ds @@ abs_float ds,
+  if ds>0. then `N else `S
+
+let ew_of_second ds =
+  Coordinate.of_ds @@ abs_float ds,
+  if ds>0. then `E else `W
+
+let of_seconds (latitude,longitude) =
+  ns_of_second latitude,ew_of_second longitude

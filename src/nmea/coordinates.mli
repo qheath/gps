@@ -16,3 +16,4 @@ val pp : Format.formatter -> t -> unit
 val pp_nmea : Format.formatter -> t -> unit
 
 val to_seconds : t -> float * float
+val of_seconds : float * float -> t
