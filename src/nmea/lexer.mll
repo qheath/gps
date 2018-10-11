@@ -4,36 +4,13 @@
 }
 
 let digit = ['0'-'9']
-let date = digit digit digit digit digit digit digit digit
-let time = digit? digit digit digit digit digit '.' digit+
-let real = (((digit? digit)? digit)? digit)? digit '.' digit+
-let dmy = digit digit digit digit digit digit?
-let nat = digit (digit (digit digit?)?)?
+let real = ((((digit? digit)? digit)? digit)? digit)? digit '.' digit+
+let nat = ((((((digit? digit)? digit)? digit)? digit)? digit)? digit)? digit
 
 let hexit = digit | ['A'-'F']
 let hex = hexit hexit
 
-let hours = digit digit
-let minutes = digit digit
-let seconds = digit digit
-let miliseconds = digit digit digit
-
 rule token = parse
-  | dmy                         { let date = int_of_string (Lexing.lexeme lexbuf) in
-                                  let day = date/10000 in
-                                  let month = date/100 - 100*day in
-                                  let year = date - 100*month - 10000*day in
-                                  DATE ((if year<70 then year+2000 else year+1900),month,day) }
-  | date                        { let date = int_of_string (Lexing.lexeme lexbuf) in
-                                  let year = date/10000 in
-                                  let month = date/100 - 100*year in
-                                  let day = date - 100*month - 10000*year in
-                                  DATE (year,month,day) }
-  | time                        { let time = float_of_string (Lexing.lexeme lexbuf) in
-                                  let hours = (int_of_float time)/10000 in
-                                  let minutes = (int_of_float time)/100 - 100*hours in
-                                  let seconds = time -. 100.*.((float)(minutes + 100*hours)) in
-                                  TIME (hours,minutes,seconds) }
   | nat                         { NAT (int_of_string (Lexing.lexeme lexbuf)) }
   | real                        { REAL (float_of_string (Lexing.lexeme lexbuf)) }
   | hex                         { HEX (int_of_string ("0x"^(Lexing.lexeme lexbuf))) }

@@ -1,6 +1,3 @@
-%token <(int * int * int)> DATE
-%token <(int * int * float)> TIME
-
 %token <int> NAT
 %token <float> REAL
 %token <int> HEX
@@ -63,9 +60,9 @@ talker_sentence:
   | GP RMC COMMA gp_rmc_sentence        { GP.Talker.RMC $4 }
 
 gp_gga_sentence:
-  | time COMMA coords COMMA NAT COMMA NAT COMMA COMMA COMMA UNIT COMMA COMMA UNIT COMMA COMMA STAR checksum
+  | REAL COMMA coords COMMA NAT COMMA NAT COMMA COMMA COMMA UNIT COMMA COMMA UNIT COMMA COMMA STAR checksum
         { GP.Talker.({
-            ptime = $1 ;
+            ptime = Utils.utc_of_time $1 ;
             coordinates = $3 ;
             gps_quality = $5 ;
             satellites_number = $7 ;
@@ -78,9 +75,15 @@ gp_gga_sentence:
         })}
 
 gp_rmc_sentence:
-  | TIME COMMA STATUS COMMA coords COMMA REAL COMMA COMMA DATE COMMA COMMA COMMA STATUS STAR checksum
-        { GP.Talker.({
-            ptime = Utils.utc_of_dt ($10,$1) ;
+  | REAL COMMA STATUS COMMA coords COMMA REAL COMMA COMMA NAT COMMA COMMA COMMA STATUS STAR checksum
+        { let date =
+            let day = $10/10000 in
+            let month = $10/100 - 100*day in
+            let year = $10 - 100*month - 10000*day in
+            (if year<70 then year+2000 else year+1900),month,day
+          in
+          GP.Talker.({
+            ptime = Utils.utc_of_time ~date $1 ;
             coordinates = $5 ;
             speed = $7 ;
             track = None ;
@@ -89,10 +92,15 @@ gp_rmc_sentence:
         })}
 
 date_time:
-  | DATE TIME                   { Utils.utc_of_dt ($1,$2) }
-
-time:
-  | TIME                        { Utils.utc_of_t $1 }
+  | NAT REAL
+        { let date =
+            let year = $1/10000 in
+            let month = $1/100 - 100*year in
+            let day = $1 - 100*month - 10000*year in
+            year,month,day
+          in
+          Utils.utc_of_time ~date $2
+        }
 
 checksum:
   | HEX                         { $1 }

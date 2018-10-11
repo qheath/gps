@@ -1,20 +1,17 @@
-let utc_of_dt =
+let utc_of_time =
   let get = function None -> assert false | Some v -> v in
-  fun (d,(h,m,ss)) ->
-    let s = floor ss in
-    let ps = Int64.of_float ((ss-.s) *. 1e+12) in
+  fun ?(date=Ptime.to_date Ptime.epoch) time ->
+    let hours,minutes,(seconds,pico_seconds) =
+      let hours = (int_of_float time)/10000 in
+      let minutes = (int_of_float time)/100 - 100*hours in
+      let decimal_seconds = time -. 100.*.((float)(minutes + 100*hours)) in
+      let seconds = floor decimal_seconds in
+      let pico_seconds = Int64.of_float ((decimal_seconds-.seconds) *. 1e+12) in
+      hours,minutes,(int_of_float seconds,pico_seconds)
+    in
     get @@ Ptime.add_span
-             (get @@ Ptime.of_date_time (d, ((h,m,int_of_float s), 0)))
-             (get @@ Ptime.Span.of_d_ps (0,ps))
-
-let utc_of_t =
-  let get = function None -> assert false | Some v -> v in
-  fun (h,m,ss) ->
-    let s = floor ss in
-    let ps = Int64.of_float ((ss-.s) *. 1e+12) in
-    get @@ Ptime.add_span
-             (get @@ Ptime.of_date_time (Ptime.to_date Ptime.epoch, ((h,m,int_of_float s), 0)))
-             (get @@ Ptime.Span.of_d_ps (0,ps))
+             (get @@ Ptime.of_date_time (date, ((hours,minutes,seconds), 0)))
+             (get @@ Ptime.Span.of_d_ps (0,pico_seconds))
 
 let pp_dmy chan ptime =
   let y,m,d = Ptime.to_date ptime in
