@@ -43,6 +43,11 @@ module Coordinate = struct
     | DDM (d,dm) -> Format.fprintf fmt "%d°%f'" d dm
     | DMDS (d,m,ds) -> Format.fprintf fmt "%d°%d'%f''" d m ds
 
+  let ddm f =
+    let degrees = (int_of_float f)/100 in
+    let minutes = f -. ((float)(100 * degrees)) in
+    DDM (degrees,minutes)
+
 end
 
 type t = (Coordinate.t * ns) * (Coordinate.t * ew)

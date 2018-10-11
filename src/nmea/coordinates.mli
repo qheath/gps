@@ -8,6 +8,8 @@ module Coordinate : sig
     | DDM of  (int * float)       (** degree, decimal minute *)
     | DMDS of (int * int * float) (** degree, minute, decimal second *)
 
+  val ddm : float -> t
+
 end
 
 type t = (Coordinate.t * ns) * (Coordinate.t * ew)

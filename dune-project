@@ -2,6 +2,6 @@
 
 (name gps)
 
-(version 0.7)
+(version 0.8)
 
 (using menhir 1.0)

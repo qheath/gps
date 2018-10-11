@@ -6,8 +6,7 @@
 let digit = ['0'-'9']
 let date = digit digit digit digit digit digit digit digit
 let time = digit? digit digit digit digit digit '.' digit+
-let coord = ((digit? digit)? digit)? digit digit '.' digit+
-let real = digit? digit '.' digit+
+let real = (((digit? digit)? digit)? digit)? digit '.' digit+
 let dmy = digit digit digit digit digit digit?
 let nat = digit (digit (digit digit?)?)?
 
@@ -35,10 +34,6 @@ rule token = parse
                                   let minutes = (int_of_float time)/100 - 100*hours in
                                   let seconds = time -. 100.*.((float)(minutes + 100*hours)) in
                                   TIME (hours,minutes,seconds) }
-  | coord                       { let coord = float_of_string (Lexing.lexeme lexbuf) in
-                                  let degrees = (int_of_float coord)/100 in
-                                  let minutes = coord -. ((float)(100 * degrees)) in
-                                  COORD (Coordinates.Coordinate.DDM (degrees,minutes)) }
   | nat                         { NAT (int_of_string (Lexing.lexeme lexbuf)) }
   | real                        { REAL (float_of_string (Lexing.lexeme lexbuf)) }
   | hex                         { HEX (int_of_string ("0x"^(Lexing.lexeme lexbuf))) }

@@ -1,6 +1,5 @@
 %token <(int * int * int)> DATE
 %token <(int * int * float)> TIME
-%token <Coordinates.Coordinate.t> COORD
 
 %token <int> NAT
 %token <float> REAL
@@ -100,4 +99,6 @@ checksum:
   | NAT                         { int_of_string (Printf.sprintf "0x%d" $1) }
 
 coords:
-  | COORD COMMA NS COMMA COORD COMMA EW { ($1,$3),($5,$7) }
+  | REAL COMMA NS COMMA REAL COMMA EW
+                                { (Coordinates.Coordinate.ddm $1,$3),
+                                  (Coordinates.Coordinate.ddm $5,$7) }
