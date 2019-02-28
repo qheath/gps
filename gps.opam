@@ -1,5 +1,5 @@
 opam-version: "2.0"
-version: "0.9"
+version: "0.10"
 maintainer: "Quentin Heath <12143333+qheath@users.noreply.github.com>"
 authors: "Quentin Heath <12143333+qheath@users.noreply.github.com>"
 homepage: "https://github.com/qheath/gps"
@@ -19,6 +19,7 @@ depends: [
   "nelist" {build}
   "gg" {build}
   "vg" {build}
+  "cairo2" {build}
   "jupiteri" {build}
   "patience_diff" {with-test}
   "getarg" {with-test}
