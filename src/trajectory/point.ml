@@ -1,4 +1,4 @@
-type t = Gg.V3.t
+type t3 = Gg.V3.t
 
 (* export *)
 
@@ -15,10 +15,18 @@ let pp = Gg.V3.pp
 
 (* misc *)
 
-let barycentre pws =
-  let q,w =
-    pws
-    |> NEList.map (fun (p,w) -> Gg.V3.(w * p),w)
-    |> NEList.binop (fun (q0,w0) (q1,w1) -> Gg.V3.(q0 + q1),(w0 +. w1))
-  in
-  Gg.V3.(q / w),w
+type t4 = Gg.V4.t
+
+let v4_of_v3 = Gg.V4.of_v3 ~w:1.
+
+let v3_of_v4 v4 =
+  let x,y,z,_ = Gg.V4.to_tuple @@ Gg.V4.homogene v4 in
+  Gg.V3.of_tuple (x,y,z)
+
+let barycentre = NEList.binop Gg.V4.(+)
+
+let middle point0 point1 =
+  NEList.(push point0 (Some (push point1 None)))
+  |> NEList.map v4_of_v3
+  |> barycentre
+  |> v3_of_v4

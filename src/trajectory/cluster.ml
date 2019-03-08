@@ -3,27 +3,26 @@ let () = Random.self_init ()
 let tau = atan 1. *. 8.
  *)
 
-type inner_cluster = Point.t * int * subclusters
+type inner_cluster = Point.t4 * subclusters
 and subclusters =
   | Point
-  | SubClusters of (inner_cluster * Point.t) * (Point.t * inner_cluster)
-type t = Point.t * inner_cluster * Point.t
+  | SubClusters of (inner_cluster * Point.t3) * (Point.t3 * inner_cluster)
+type t = Point.t3 * inner_cluster * Point.t3
 
 (* construction *)
 
-let of_point p = p,(p,1,Point),p
+let of_point p = p,(Point.v4_of_v3 p,Point),p
 
 let merge
-    (start0,(point0,n0,_ as inner0),end0)
-    (start1,(point1,n1,_ as inner1),end1) =
-  let point =
-    Gg.V3.(mix point0 point1 (((float)n1) /. ((float)n0 +. (float)n1)))
-  and n = n0 + n1
+    (start0,(point0,_ as inner0),end0)
+    (start1,(point1,_ as inner1),end1) =
+  let point = Gg.V4.(point0 + point1)
   and subclusters = SubClusters ((inner0,end0),(start1,inner1)) in
-  start0,(point,n,subclusters),end1
+  start0,(point,subclusters),end1
 
 let multi_merge =
   let pass forward =
+    (* merge the heads of backward0 and forward1 *)
     let rec aux backward0 forward1 =
       let cluster0,backward0' = NEList.pop backward0
       and cluster1,forward1' = NEList.pop forward1 in
@@ -33,12 +32,17 @@ let multi_merge =
       in
       let backward1 = NEList.push cluster01 backward0' in
       match forward1' with
-      | None -> backward1
+      | None ->
+        (* there was an even number of clusters, return all the pairs *)
+        backward1
       | Some forward2 ->
         let cluster2,forward2' = NEList.pop forward2 in
         let backward2 = NEList.push cluster2 (Some backward1) in
         match forward2' with
-        | None -> backward2
+        | None ->
+          (* there was an off number of clusters, return all pairs plus
+           * the last one *)
+          backward2
         | Some forward3 -> aux backward2 forward3
     in
     aux
@@ -58,9 +62,9 @@ let of_points points =
 
 (* deconstruction *)
 
-let to_point (_,(p,_,_),_) = p
+let to_point (_,(p,_),_) = Point.v3_of_v4 p
 
-let split (start0,(_,_,subclusters),end1) =
+let split (start0,(_,subclusters),end1) =
   match subclusters with
   | Point -> None
   | SubClusters ((inner0,end0),(start1,inner1)) ->
@@ -98,7 +102,7 @@ let to_points =
   and g _ _ points = Some points in
   fun cluster -> NEList.rev @@ fold f g cluster None
 
-let pair_to_points (_,(_,_,_),end0) (start1,(_,_,_),_) =
+let pair_to_points (_,(_,_),end0) (start1,(_,_),_) =
   end0,start1
 
 (* export *)
@@ -109,10 +113,10 @@ let to_path ~point_radius =
 let to_box =
   binop Point.to_box Gg.Box3.union
 
-let pp fmt (point0,(point,_,_),point1) =
+let pp fmt (point0,(point,_),point1) =
   Format.fprintf fmt "[%a ; %a ; %a]"
     Point.pp point0
-    Point.pp point
+    Point.pp (Point.v3_of_v4 point)
     Point.pp point1
 
 let pp_full fmt cluster =
@@ -131,7 +135,7 @@ let total_length css =
     0.
  *)
 
-let size (_,(_,n,_),_) = n
+let size (_,(point,_),_) = Gg.V4.w point
 
 (* TODO
  * have three ways to compute the score of a cluster sequence:
@@ -150,6 +154,4 @@ let score =
     sum *.sum *. sum
 
 let middle (_,_,end0) (start2,_,_) =
-  let points = NEList.(push (end0,1.) (Some (push (start2,1.) None))) in
-  let centre,_ = Point.barycentre points in
-  centre
+  Point.middle end0 start2

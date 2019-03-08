@@ -13,5 +13,5 @@ val binop :
   (Cluster.t -> 'a) ->
   ('a -> 'a -> 'a) ->
   t NEList.t -> 'a
-val max_size : t NEList.t -> int
+val max_size : t NEList.t -> float
 val better : t NEList.t -> t NEList.t -> bool

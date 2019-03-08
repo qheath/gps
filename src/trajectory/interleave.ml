@@ -11,12 +11,12 @@ type state =
   | Init of Atom.t NEList.t
   | Unsplitable of Atom.t NEList.t
   | Clusterised of Atom.t NEList.t
-  | SplitableN of (Atom.t cursor1 * int)
-  | FoundSplitableClusterN of (Atom.t cursor1 * int)
-  | DidSplitClusterN of (Atom.t cursor2 * int)
+  | SplitableN of (Atom.t cursor1 * float)
+  | FoundSplitableClusterN of (Atom.t cursor1 * float)
+  | DidSplitClusterN of (Atom.t cursor2 * float)
 
 let attempt_split (atoms,threshold) =
-  if threshold<2 then Unsplitable atoms else
+  if threshold<2. then Unsplitable atoms else
     let atom,atoms' = NEList.pop atoms in
     SplitableN ((None,atom,atoms'),threshold)
 
@@ -111,9 +111,7 @@ let average =
     and point1 = Cluster.to_point cluster1 in
     let t02 = Gg.V3.z point02
     and t1 = Gg.V3.z point1 in
-    let point,_ =
-      Point.barycentre NEList.(push (point02,1.) (Some (push (point1,1.) None)))
-    in
+    let point = Point.middle point02 point1 in
     t02,Gg.V2.of_v3 point,t1,switch1
   in
   fun atoms ->
