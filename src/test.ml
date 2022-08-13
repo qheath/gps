@@ -16,43 +16,6 @@
 (* along with this program.  If not, see <http://www.gnu.org/licenses/>.    *)
 (****************************************************************************)
 
-let dir = ref "data"
-
-let ifile name =
-  Printf.sprintf "%s/%s/in.nmea" !dir name
-and ofile name =
-  Printf.sprintf "%s/%s/out.nmea" !dir name
-and odir () =
-  Printf.sprintf "%s/frames" !dir
-
-let parse_args () =
-  let names = ref []
-  and frames = ref false in
-
-  let longopts = GetArg.[
-    ('v',"verbose"," increase verbosity"),
-    Lone JupiterI.Output.Verbosity.moreTalk ;
-
-    ('q',"quiet"," decrease verbosity"),
-    Lone JupiterI.Output.Verbosity.lessTalk ;
-
-    ('d',"directory",Printf.sprintf "directory where to read and write [%s]" !dir),
-    set_string dir ;
-
-    ('i',"input","name what to read (multiple)"),
-    (Mandatory (String (fun s -> names := s :: !names))) ;
-
-    ('f',"frames","directory build frames instead of copying NMEA files"),
-    set_bool frames ;
-  ] and usage =
-    Printf.sprintf
-      "usage: %s [<options>]"
-      Sys.argv.(0)
-  in
-
-  GetArg.parse longopts ignore usage ;
-  !names,!frames
-
 let prepare_names = function
   | [] ->
     JupiterI.Output.wprintf "nothing to do, leaving" ;
@@ -69,7 +32,7 @@ let prepare_names = function
       (List.length names) ;
     None
 
-let build_atoms =
+let build_atoms ofile =
   let aux (name,switch) atoms' =
     match NMEA.Input.read_sony_gps_file @@ ofile name with
     | None ->
@@ -88,7 +51,7 @@ let build_atoms =
   fun prepared_names ->
     NEList.fold aux (fun _ _ atoms' -> atoms') prepared_names None
 
-let copy_names =
+let copy_names ifile ofile =
   let copy name =
     match NMEA.Input.read_sony_gps_file @@ ifile name with
     | None ->
@@ -98,17 +61,20 @@ let copy_names =
   in
   List.iter copy
 
-let () =
-  let names,frames = parse_args () in
-  if frames then begin
-    match prepare_names names with
+let main verbosity unverbosity data_dir input_names build_frames =
+  List.iter (fun _ -> JupiterI.Output.Verbosity.moreTalk ()) verbosity ;
+  List.iter (fun _ -> JupiterI.Output.Verbosity.lessTalk ()) unverbosity ;
+  let ofile = Printf.sprintf "%s/%s/out.nmea" data_dir in
+  if build_frames then begin
+    match prepare_names input_names with
     | None -> ()
     | Some prepared_names ->
-      match build_atoms prepared_names with
+      match build_atoms ofile prepared_names with
       | None -> ()
       | Some atoms ->
         let _atoms,average' =
-          Trajectory.Interleave.process ~odir:(odir ()) atoms
+          Trajectory.Interleave.process
+            ~odir:(Printf.sprintf "%s/frames" data_dir) atoms
         in
         match average' with
         | None -> ()
@@ -122,5 +88,28 @@ let () =
           in
           NEList.iter print (fun _ _ -> ()) average
   end else begin
-    copy_names names
+    let ifile = Printf.sprintf "%s/%s/in.nmea" data_dir in
+    copy_names ifile ofile input_names
   end
+
+let () =
+  let verbosity =
+    let doc = "increase verbosity" in
+    Cmdliner.Arg.(value & flag_all & info ["v";"verbose"] ~doc)
+  and unverbosity =
+    let doc = "decrease verbosity" in
+    Cmdliner.Arg.(value & flag_all & info ["q";"quiet"] ~doc)
+  and data_dir =
+    let doc = "where to read from and write to" in
+    Cmdliner.Arg.(value & opt dir "data" & info ["d";"data_dir"] ~docv:"dir_path" ~doc)
+  and input_names =
+    let doc = "what to read" in
+    Cmdliner.Arg.(value & opt_all string [] & info ["i";"input"] ~docv:"name" ~doc)
+  and build_frames =
+    let doc = "build frames instead of copying NMEA files" in
+    Cmdliner.Arg.(value & flag & info ["f";"frames"] ~doc)
+  in
+  let term =
+    Cmdliner.Term.(const main $ verbosity $ unverbosity $ data_dir $ input_names $ build_frames)
+  in
+  Cmdliner.Term.(exit @@ eval (term,info "gps"))
