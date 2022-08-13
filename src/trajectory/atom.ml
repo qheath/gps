@@ -24,9 +24,9 @@ let to_paths ~point_radius =
   in
   NEList.fold f g
 
-let binop map op atoms =
+let binop f op atoms =
   atoms
-  |> NEList.map (fun (cluster,_) -> map cluster)
+  |> NEList.map (fun (cluster,_) -> f cluster)
   |> NEList.binop op
 
 let to_box =
