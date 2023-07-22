@@ -1,3 +1,5 @@
+open Lwt.Syntax
+
 module Cursor : sig
 
   type 'a t1 = 'a NEList.t option * 'a * 'a NEList.t option
@@ -188,27 +190,30 @@ let process ~odir ?(nb_iters=3) =
   let sub_aux = function
     | Init atoms ->
       let average' = average atoms in
-      pause atoms average' ;
+      let* () = pause atoms average' in
       let threshold = Atom.max_size atoms in
-      Error (test_splitability (atoms,threshold))
+      Lwt.return @@ Error (test_splitability (atoms,threshold))
     | Unsplitable atoms ->
-      Ok (clusterise atoms)
+      Lwt.return @@ Ok (clusterise atoms)
     | SplitableN (cursor,threshold) ->
-      Error (find_splitable_cluster cursor threshold)
+      Lwt.return @@ Error (find_splitable_cluster cursor threshold)
     | FoundSplitableClusterN (cursor,threshold) ->
-      Error (split_cluster cursor threshold)
+      Lwt.return @@ Error (split_cluster cursor threshold)
     | DidSplitClusterN (cursor2,threshold) ->
-      Error (bubble_clusters cursor2 threshold)
+      Lwt.return @@ Error (bubble_clusters cursor2 threshold)
   in
 
   let rec aux (nb_iters,state) =
-    match sub_aux state with
+    let* blah = sub_aux state in
+    match blah with
     | Ok atoms ->
       let nb_iters = nb_iters-1 in
-      if nb_iters>0 then iterations (nb_iters,atoms) else begin
+      if nb_iters>0 then
+        iterations (nb_iters,atoms)
+      else begin
         let average' = average atoms in
-        pause atoms average' ;
-        (atoms,average')
+        let* () = pause atoms average' in
+        Lwt.return @@ (atoms,average')
       end
     | Error intermediate_state -> aux (nb_iters,intermediate_state)
   and iterations (nb_iters,atoms) =

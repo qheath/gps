@@ -17,4 +17,4 @@ val parse_sony_gps_file : Lexing.lexbuf -> answer
 (** {6 High-level access} *)
 
 (** Read a Sony GPS file. *)
-val read_sony_gps_file : string -> GP.segment NEList.t option
+val read_sony_gps_file : string -> GP.segment NEList.t option Lwt.t

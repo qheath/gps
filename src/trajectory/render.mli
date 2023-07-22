@@ -6,4 +6,4 @@ val render_atoms :
   pixel_margin:float ->
   pixel_stroke_width:float ->
   pixel_point_radius:float ->
-  unit
+  unit Lwt.t

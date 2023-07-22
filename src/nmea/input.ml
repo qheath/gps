@@ -1,4 +1,5 @@
 module Interp = Parser.MenhirInterpreter
+open Lwt.Syntax
 
 type answer =
   | Yes of GP.segment NEList.t
@@ -27,26 +28,33 @@ let read_sony_gps_file path =
   let segments =
     let lexbuf = Lexing.from_channel ic in
     match parse_sony_gps_file lexbuf with
-    | Yes segments -> Some segments
+    | Yes segments -> Lwt.return @@ Some segments
     | Parser (state,position) ->
-      begin
+      let* () =
         match
           (*try Some (Parser_messages.message (Interp.number state))
             with Not_found ->*) None
         with
         | None ->
-          JupiterI.Output.eprintf
-            "%a: parser state %d reached, cannot go forward@."
-            JupiterI.Pos.pp (JupiterI.Pos.of_positions position) state
+          let tags =
+            Logs.Tag.(empty |> add JupiterI.Pos.tag_def (JupiterI.Pos.of_positions position))
+          in
+          JupiterI.Output.err
+            (fun m -> m ~tags "parser state %d reached, cannot go forward@." state)
         | Some message ->
-          JupiterI.Output.eprintf "%a: %s@."
-            JupiterI.Pos.pp (JupiterI.Pos.of_positions position) message
-      end ;
-      None
+          let tags =
+            Logs.Tag.(empty |> add JupiterI.Pos.tag_def (JupiterI.Pos.of_positions position))
+          in
+          JupiterI.Output.err
+            (fun m -> m ~tags "%s@." message)
+      in
+      Lwt.return None
     | Lexer message ->
-      Format.eprintf "%a: lexing error: %S@."
-        JupiterI.Pos.pp (JupiterI.Pos.of_lexbuf lexbuf ()) message ;
-      None
+      let tags =
+        Logs.Tag.(empty |> add JupiterI.Pos.tag_def (JupiterI.Pos.of_lexbuf lexbuf ()))
+      in
+      let* () = JupiterI.Output.err (fun m -> m ~tags "lexing error: %S@." message) in
+      Lwt.return @@ None
   in
   close_in ic ;
   segments

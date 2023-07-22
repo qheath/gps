@@ -66,6 +66,7 @@ let main verbosity unverbosity data_dir input_names build_frames =
   List.iter (fun _ -> JupiterI.Output.Verbosity.lessTalk ()) unverbosity ;
   let ofile = Printf.sprintf "%s/%s/out.nmea" data_dir in
   if build_frames then begin
+    (* make frames out of "out" *)
     match prepare_names input_names with
     | None -> ()
     | Some prepared_names ->
@@ -88,6 +89,7 @@ let main verbosity unverbosity data_dir input_names build_frames =
           in
           NEList.iter print (fun _ _ -> ()) average
   end else begin
+    (* copy "in" into "out" *)
     let ifile = Printf.sprintf "%s/%s/in.nmea" data_dir in
     copy_names ifile ofile input_names
   end
@@ -112,4 +114,4 @@ let () =
   let term =
     Cmdliner.Term.(const main $ verbosity $ unverbosity $ data_dir $ input_names $ build_frames)
   in
-  Cmdliner.Term.(exit @@ eval (term,info "gps"))
+  Stdlib.exit @@ Cmdliner.Cmd.(eval (v (info "gps") term))

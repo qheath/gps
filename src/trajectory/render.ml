@@ -1,20 +1,26 @@
+open Lwt.Syntax
+
 let render_renderable ~filename ~fmt ~renderable =
   let oc = open_out filename in
   let r =
-    let warn w = JupiterI.Output.eprintf "%a" Vg.Vgr.pp_warning w in
+    let warn w =
+      ignore
+        (JupiterI.Output.err (fun m -> m "%a" Vg.Vgr.pp_warning w))
+    in
     Vg.Vgr.create ~warn (Vgr_cairo.stored_target fmt) (`Channel oc)
   in
-  let () =
+  let* () =
     match Vg.Vgr.render r (`Image renderable) with
-    | `Partial -> JupiterI.Output.eprintf "%S incomplete" filename
-    | `Ok -> ()
+    | `Partial -> JupiterI.Output.err (fun m -> m "%S incomplete" filename)
+    | `Ok -> Lwt.return ()
   in
-  let () =
+  let* () =
     match Vg.Vgr.render r `End with
-    | `Partial -> JupiterI.Output.eprintf "%S incomplete" filename
-    | `Ok -> ()
+    | `Partial -> JupiterI.Output.err (fun m -> m "%S incomplete" filename)
+    | `Ok -> Lwt.return ()
   in
-  close_out oc
+  close_out oc ;
+  Lwt.return ()
 
 (*
 let fill_path ~colour path =
